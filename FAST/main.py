@@ -1,4 +1,4 @@
-from fastapi import FastAPI 
+from fastapi import FastAPI, HTTPException 
 from typing import Optional
 
 
@@ -20,52 +20,29 @@ usuarios=[
 def home():
     return{'hello':'world FastApi'}
 
+#Consulta ususario 
+@app.get('/todosUsuarios', tags=['Operaciones CRUD'])
+def leerUsuarios():
+    return{"Los usuaruarios resgistrados son":usuarios}
 
-@app.get('promedio', tags=['Mi calificacion TAI'])
-def promedio():
-    return 6.1
 
-@app.get('/usuario/{id}', tags=['parametro obligatorio'])
-def consultaUsuario(id:int):
-    #conectamos a ala BD
-    #consultamos
-    return {'Se encontro el usuario':id}
+#Agregar usuario 
+@app.post('/usuario/', tags=['Operaciones CRUD'])
+def agregarusuarios (usuario:dict):
+    for usr in usuarios:
+        if usr["id"] == usuario.get("id"): 
+            raise HTTPException(status_code=400, detail="El id ya existe")   
+    usuarios.append(usuario)
+    return usuario
 
+@app.put('/usuario/{id}', tags=['Operaciones CRUD'])
+def actualizarusuario (id:int, usuarioActualizado:dict):
+    for index, usr in enumerate(usuarios):
+        if usr["id"] == id:
+            # Actualiza el usuario con los nuevos datos
+            usuarios[index].update(usuarioActualizado)
+            return usuarios[index]
     
-    
-    #Endopint parametro Opcional
-@app.get('/usuario/', tags=['Parametro opcional'])
-def consultaUsuario1(id: Optional[int]=None): 
-
-    if id is not None: #validamos que exite id
-        for usu in usuarios: #si exite comienso interar 
-            if usu["id"] == id: #pasamos el parametro 
-                return {"Mensaje":"Usuario encontrado","usuario": usu} #Y regresamos el mensaje si esta pasando 
-         
-        return {"Mensaje":f"No se encontro el usuario con id : {id}"}#Y regresamos el mensaje si no esta pasando 
-    else :
-        return {'No se proporciono un Id':id}
-
-
-#endpoint con varios parametro opcionales
-@app.get("/usuarios/", tags=["3 parámetros opcionales"])
-async def consulta_usuarios(
-    usuario_id: Optional[int] = None,
-    nombre: Optional[str] = None,
-    edad: Optional[int] = None
-):
-    resultados = []
-
-    for usuario in usuarios:
-        if (
-            (usuario_id is None or usuario["id"] == usuario_id) and
-            (nombre is None or usuario["nombre"].lower() == nombre.lower()) and
-            (edad is None or usuario["edad"] == edad)
-        ):
-            resultados.append(usuario)
-
-    if resultados:
-        return {"usuarios_encontrados": resultados}
-    else:
-        return {"mensaje": "No se encontraron usuarios que coincidan con los parámetros proporcionados."}
+    # Si no se encuentra el usuario, lanza una excepción
+    raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
