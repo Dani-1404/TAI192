@@ -34,15 +34,23 @@ def agregarusuarios (usuario:dict):
             raise HTTPException(status_code=400, detail="El id ya existe")   
     usuarios.append(usuario)
     return usuario
-
+#Editar Usuario 
 @app.put('/usuario/{id}', tags=['Operaciones CRUD'])
 def actualizarusuario (id:int, usuarioActualizado:dict):
     for index, usr in enumerate(usuarios):
         if usr["id"] == id:
-            # Actualiza el usuario con los nuevos datos
             usuarios[index].update(usuarioActualizado)
             return usuarios[index]
     
-    # Si no se encuentra el usuario, lanza una excepción
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
+#Elimiar usuario 
+
+@app.delete('/usuario/{id}', tags=['Operaciones CRUD'])
+def eliminarusuario(id: int):
+    for index, usr in enumerate(usuarios):
+        if usr["id"] == id:
+            del usuarios[index] 
+            return {"detail": "Usuario eliminado exitosamente"}
+    
+    raise HTTPException(status_code=404, detail="Usuario no encontrado")
