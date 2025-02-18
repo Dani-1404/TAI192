@@ -27,11 +27,12 @@ def obtener_tarea(tarea_id: int):
     if tarea_encontrada:
         return tarea_encontrada
     raise HTTPException(status_code=404, detail="Tarea no encontrada")
+
 #Agregar tarea 
 @app.post('/Agregar_Tarea/', tags=['Operaciones Tarea'])
 def agregartareas (tarea:dict):
-    for usr in tareas:
-        if usr["id"] == tarea.get("id"): 
+    for tarea in tareas:
+        if tarea["id"] == tarea.get("id"): 
             raise HTTPException(status_code=400, detail="El id ya existe")   
     tareas.append(tarea)
     return tarea
@@ -45,3 +46,13 @@ def actualizartarea (id:int, tareaActualizado:dict):
             return tareas[index]
     
     raise HTTPException(status_code=404, detail="Tarea no encontrado")
+
+#Eliminar tarea
+@app.delete('/Eliminar Tarea/{id}', tags=['Operaciones Tareas'])
+def eliminartarea(id: int):
+    for index, tarea in enumerate(tareas):
+        if tarea["id"] == id:
+            del tareas[index] 
+            return {"detail": "Tarea eliminada exitosamente"}
+    
+    raise HTTPException(status_code=404, detail="Tarea no encontrada")
