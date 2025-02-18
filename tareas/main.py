@@ -16,6 +16,22 @@ tareas=[
 
 
 #Consultar tareas
-@app.get('/todostareas', tags=['Operaciones CRUD'])
+@app.get('/Mostrar Tareas', tags=['Operaciones Tareas'])
 def leertareas():
     return{"Las tareas resgistradas son":tareas}
+
+#Consultar tarea po ID
+@app.get('/tareas/{tarea_id}', tags=['Operaciones Tareas'])
+def obtener_tarea(tarea_id: int):
+    tarea_encontrada = next((tarea for tarea in tareas if tarea["id"] == tarea_id), None)
+    if tarea_encontrada:
+        return tarea_encontrada
+    raise HTTPException(status_code=404, detail="Tarea no encontrada")
+#Agregar tarea 
+@app.post('/Agregar Tarea/', tags=['Operaciones Tarea'])
+def agregartareas (tarea:dict):
+    for usr in tareas:
+        if usr["id"] == tarea.get("id"): 
+            raise HTTPException(status_code=400, detail="El id ya existe")   
+    tareas.append(tarea)
+    return tarea

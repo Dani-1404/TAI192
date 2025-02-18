@@ -5,7 +5,7 @@ from typing import Optional
 app= FastAPI(
     title= 'Mi primer API S192',
     description='Daniela Valdez',
-    venrsion='1.0.1'
+    version='1.0.1'
     )
 
 usuarios=[
