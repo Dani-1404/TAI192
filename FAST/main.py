@@ -4,6 +4,9 @@ from typing import Optional,List
 from modelsPydantic import modelousuario, modeloAuth
 from genToken import createToken
 from middlewares import BearerJWT
+from DB.conexion import Session,engine,Base
+from models.modelsDB import User
+
 
 
 app= FastAPI(
@@ -13,7 +16,7 @@ app= FastAPI(
     )
 #modelo de validaciones 
 
-    
+Base.metadata.create_all(bind=engine)
 
 
 #BD ficticia
