@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException,Depends 
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder 
 from typing import Optional,List
 from modelsPydantic import modelousuario, modeloAuth
 from genToken import createToken
@@ -50,19 +51,75 @@ def login(autorizacion:modeloAuth):
 
 
 #Consulta ususario 
-@app.get('/todosUsuarios', dependencies={Depends(BearerJWT())},response_model=list[modelousuario], tags=['Operaciones CRUD'])
+@app.get('/todosUsuarios', tags=['Operaciones CRUD'])
 def leerUsuarios():
-    return usuarios
+    db = Session()
+    try:
+        consulta= db.query(User).all()
+        return JSONResponse(content=jsonable_encoder(consulta))
+    
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Error al guardar el usuario",
+                "usuario": str(e)
+            })
+    
+    finally:
+        db.close#cerramos las conecxiones de la bd 
 
 
-#Agregar usuario 
+#Consulta ususario id 
+@app.get('/usuario/{id}', tags=['Operaciones CRUD'])
+def buscarUno(id:int):
+    db = Session()
+    try:
+        consultauno= db.query(User).filter(User.id == id).first()
+        if not consultauno:
+            return JSONResponse(status_code="404", content={"Mensaje":"Usuario no encontrado"})
+        
+        return JSONResponse(content=jsonable_encoder(consultauno))
+    
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Error al consultar",
+                "usuario": str(e)
+            })
+    
+    finally:
+        db.close #cerramos las conecxiones de la bd 
+   
+   
+
+#agregar usuari<o
 @app.post('/usuario/', response_model=modelousuario, tags=['Operaciones CRUD'])
-def agregarusuarios (usuario:modelousuario):
-    for usr in usuarios:
-        if usr["id"] == usuario.id: 
-            raise HTTPException(status_code=400, detail="El id ya existe")   
-    usuarios.append(usuario)
-    return usuario
+def agregarusuarios(usuario: modelousuario):
+    db = Session()  # definimos esta variable para que se vaya todo a la db
+    try: 
+        db.add(User(**usuario.model_dump()))  # para hacer el insert  
+        db.commit()  # confirmamos el cambio 
+        return JSONResponse(
+            status_code=201,
+            content={
+                "message": "Usuario Guardado",
+                "usuario": usuario.model_dump()  # corregido aquí
+            }
+        )  # cuando se hace exitosamente el insert
+    except Exception as e:  # para hacer excepciones en la bd 
+        db.rollback()  # en caso de que falle 
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Error al guardar el usuario",
+                "usuario": str(e)
+            }
+        )
+    finally:
+        db.close()
+        
 
 
 #Editar Usuario 
