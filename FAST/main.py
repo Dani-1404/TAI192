@@ -49,7 +49,6 @@ def login(autorizacion:modeloAuth):
 
 
 
-
 #Consulta ususario 
 @app.get('/todosUsuarios', tags=['Operaciones CRUD'])
 def leerUsuarios():
@@ -68,6 +67,7 @@ def leerUsuarios():
     
     finally:
         db.close#cerramos las conecxiones de la bd 
+
 
 
 #Consulta ususario id 
@@ -94,7 +94,7 @@ def buscarUno(id:int):
    
    
 
-#agregar usuari<o
+#agregar usuario
 @app.post('/usuario/', response_model=modelousuario, tags=['Operaciones CRUD'])
 def agregarusuarios(usuario: modelousuario):
     db = Session()  # definimos esta variable para que se vaya todo a la db
@@ -125,20 +125,62 @@ def agregarusuarios(usuario: modelousuario):
 #Editar Usuario 
 @app.put('/usuario/{id}',response_model=modelousuario, tags=['Operaciones CRUD'])
 def actualizarusuario (id:int, usuarioActualizado:modelousuario):
-    for index, usr in enumerate(usuarios):
-        if usr["id"] == id:
-            usuarios[index]=usuarioActualizado.model_dump()
-            return usuarios[index]
+    db = Session()
+    try:
+        usuario = db.query(User).filter(User.id == id).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        usuario.name = usuarioActualizado.name
+        usuario.age = usuarioActualizado.age
+        usuario.email = usuarioActualizado.email
+
+        db.commit()
+        return JSONResponse(status_code=200, 
+                            content={
+                                "message":"Usuario Actualizado", 
+                                "usuario": jsonable_encoder(usuario)})
     
-    raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    except Exception as e:
+        db.rollback()  
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Error al actualizar el usuario",
+                "error": str(e)
+            })
+        
+
+    finally:
+        db.close()
+
+    
+
 
 
 #Elimiar usuario 
 @app.delete('/usuario/{id}', tags=['Operaciones CRUD'])
 def eliminarusuario(id: int):
-    for index, usr in enumerate(usuarios):
-        if usr["id"] == id:
-            del usuarios[index] 
-            return {"detail": "Usuario eliminado exitosamente"}
+    db = Session()
+    try:
+        usuario = db.query(User).filter(User.id == id).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        db.delete(usuario)  
+        db.commit() 
+        return {"detail": "Usuario eliminado exitosamente"}
     
-    raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    except Exception as e:
+        db.rollback()  
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Error al eliminar el usuario",
+                "error": str(e)
+            }
+        )
+    
+    finally:
+        db.close()  
